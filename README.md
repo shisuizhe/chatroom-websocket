@@ -1,4 +1,4 @@
-![](https://blog-static.cnblogs.com/files/shisuizhe/chatroom.gif)
+[效果：https://blog-static.cnblogs.com/files/shisuizhe/chatroom.gif](https://blog-static.cnblogs.com/files/shisuizhe/chatroom.gif)
 
 #### How to run
 

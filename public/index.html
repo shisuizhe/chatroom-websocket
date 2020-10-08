@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="zh-cn">
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width,initial-scale=1.0">
+    <title>Chatroom</title>
+    <style>
+      #messages {
+        border: solid 2px sienna;
+        margin-bottom: 10px;
+      }
+
+      #msg-title {
+        font-size: 24px;
+        background-color: #72c4fa;
+        padding: 1px;
+      }
+
+      #msg-content {
+        padding: 2px;
+        background-color: rgb(224, 211, 211);
+      }
+    </style>
+  </head>
+  <body>
+
+    <div id="app">
+      <h4 v-if="connected">You have successfully connected!</h4>
+      <h4 v-else>Failed to connect to server!</h4>
+      <div id="messages">
+        <div id="msg-title">Message Box</div>
+        <div v-for="msg in msgs" v-html="msg" id="msg-content">
+          {{msg}}
+        </div>
+      </div>
+    
+      <form>
+        <label for="username">
+          Username: <input type="text" id="username" name="username" v-model:value="username" autocomplete="off">
+        </label>
+        <br>
+        <label for="message">
+          Message: &nbsp;&nbsp;<input type="text" id="message" name="message" v-model:value="message" autocomplete="off">
+        </label>
+        <br>
+        <label for="submit">
+          Send Message: <input type="submit" name="submit" id="submit" value="submit" @click="handleFormSubmit">
+        </label>
+      </form>
+    </div>
+
+  </body>
+  <script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script>
+  <script>
+    new Vue({
+      el: '#app',
+      data: {
+        websocket: '',
+        username: '',
+        message: '',
+        payloads: [],
+        connected: false,
+        error: ''
+      },
+      created() {
+          this.websocket = new WebSocket("ws://127.0.0.1:8000/streams/messages");
+          this.websocket.onopen = this.handleWebsocketOpen
+          this.websocket.onclose = this.handleWebsocketClose
+          this.websocket.onmessage = this.handleWebsocketMessage
+          this.websocket.onerror = this.handleWebsocketError
+      },
+      computed: {
+        msgs() {
+          msgs = this.payloads.map((payload) => {
+            return `<div>${payload.username}：${payload.message}</div>`;
+          });
+          return msgs
+        }
+      },
+      methods: {
+        handleWebsocketOpen() {
+          this.connected = true
+        },
+
+        handleWebsocketClose() {
+          this.connected = false
+        },
+
+        handleWebsocketMessage(msg) {
+          const newPayload = JSON.parse(msg.data);
+          this.payloads.push(newPayload)
+        },
+
+        handleWebsocketError(event) {
+          this.error = 'encountered websocker error: ' + event
+          console.log(event);
+          console.log(this.error);
+        },
+
+        handleFormSubmit(event) {
+          event.preventDefault();
+
+          const payload = {
+            username: this.username,
+            message: this.message
+          };
+
+          if (this.websocket && this.websocket.readyState === WebSocket.OPEN) {
+            this.websocket.send(JSON.stringify(payload));
+          };
+          
+          this.message = '';
+        }
+      }
+    })
+  </script>
+</html>
